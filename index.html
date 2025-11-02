@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vision Board 2025</title>
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ===== HEADER ===== */
+header {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  background: #7FA1BE;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  flex-wrap: wrap;
+}
+
+.right-buttons {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+button, select {
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: #fff;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+button:hover, select:hover {
+  background: #7FAFDA;
+}
+
+h1 {
+  margin: 10px;
+  font-size: 22px;
+  color: white;
+}
+
+/* ===== BOARD ===== */
+#vision-board {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr); /* 5 pe rând */
+  grid-auto-rows: 100px;
+  gap: 0; /* fără spațiu între pătrate */
+  width: 95%;
+  max-width: 600px;
+  margin-top: 20px;
+}
+
+.cell {
+  position: relative;
+  border: 0.8px solid #ddd;
+  background-color: #fafafa;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.cell img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ===== CHECKBOX CUSTOM ===== */
+/* ===== CHECK SIGN SUBTIL ===== */
+.cell input[type="checkbox"] {
+  appearance: none;
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  z-index: 20;
+  background: none;
+  border: none;
+}
+
+.cell input[type="checkbox"]::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  font-size: 18px;
+  color: rgba(40, 167, 69, 0.6); /* verde subtil */
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.cell input[type="checkbox"]:checked::after {
+  content: "✔";
+  opacity: 1;
+}
+
+
+/* ===== ADD IMAGE TEXT ===== */
+.add-image-text {
+  position: absolute;
+  bottom: 5px;
+  right: 5px;
+  font-size: 10px;
+  color: #C0C0C0;
+  font-weight: bold;
+  pointer-events: none; /* nu blochează click-ul */
+}
+
+.cell:hover .add-image-text {
+  color: #8A8A8A;
+}
+
+/* ===== DRAGGABLE TEXT ===== */
+.draggable-text {
+  position: absolute;
+  cursor: grab;
+  user-select: none;
+  font-weight: bold;
+  background: white; /* ✅ fundal complet alb, fără transparență */
+  padding: 6px 10px;
+  border-radius: 6px;
+  white-space: pre-wrap;
+  max-width: 90%;
+  touch-action: none;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.15); /* opțional, mică umbră pentru lizibilitate */
+}
+
+
+.draggable-text.editing {
+  outline: 2px dashed #666;
+  background: rgba(255,255,255,1); /* complet alb când editezi */
+  box-shadow: 0 0 6px rgba(0,0,0,0.3);
+}
+
+
+.editing {
+  outline: 2px dashed #666;
+  background: rgba(255,255,255,0.9);
+}
+
+
+</style>
+</head>
+<body>
+
+<header>
+  <h1>
+    Vision Board 
+    <select id="yearSelect">
+      <option>2025</option>
+      <option>2026</option>
+      <option>2027</option>
+    </select>
+  </h1>
+  <div class="right-buttons">
+    <button id="saveBtn">Save PNG</button>
+    <button id="localSaveBtn">Local Save</button>
+    <button id="clearBtn">Clear</button>
+    <button id="textBtn">Add Text</button>
+  </div>
+</header>
+
+<!-- Popup Text Editor -->
+<div id="textPopup" style="display:none; position:fixed; top:80px; right:20px; background:white; border:1px solid #ccc; box-shadow:0 2px 6px rgba(0,0,0,0.2); padding:15px; z-index:100;">
+  <textarea id="customText" placeholder="Enter text..." style="width:200px;height:60px;margin-bottom:10px;"></textarea>
+  <select id="fontSelect" style="width:100%;margin-bottom:10px;">
+    <option value="Arial">Arial</option>
+    <option value="Georgia">Georgia</option>
+    <option value="Courier New">Courier New</option>
+    <option value="Comic Sans MS">Comic Sans MS</option>
+    <option value="Times New Roman">Times New Roman</option>
+  </select>
+  <select id="fontSize" style="width:100%;margin-bottom:10px;">
+    <option value="14">Small</option>
+    <option value="18" selected>Medium</option>
+    <option value="24">Large</option>
+    <option value="32">Extra Large</option>
+  </select>
+  <button id="addTextToBoard" style="width:100%;">Add to Board</button>
+</div>
+
+<!-- Vision Board -->
+<div id="vision-board"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+const board = document.getElementById('vision-board');
+const textPopup = document.getElementById('textPopup');
+const textBtn = document.getElementById('textBtn');
+const totalCells = 12;
+
+for (let i = 0; i < totalCells; i++) createCell();
+
+function createCell() {
+  const cell = document.createElement('div');
+  cell.className = 'cell';
+
+  const checkbox = document.createElement('input');
+  checkbox.type = 'checkbox';
+  cell.appendChild(checkbox);
+
+  const label = document.createElement('div');
+  label.className = 'add-image-text';
+  label.textContent = 'Add Image';
+  cell.appendChild(label);
+
+  // Clic doar pe celulă (nu pe checkbox)
+ cell.addEventListener('click', (e) => {
+  const checkbox = cell.querySelector('input[type="checkbox"]');
+  if (e.target === checkbox) return; // dacă dai click pe checkbox, nu deschide selectarea imaginii
+
+  const fileInput = document.createElement('input');
+  fileInput.type = 'file';
+  fileInput.accept = 'image/*';
+
+  fileInput.onchange = () => {
+    const file = fileInput.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      // Șterge doar textul „Add Image”, nu checkboxul
+      const addText = cell.querySelector('.add-image-text');
+      if (addText) addText.remove();
+
+      // Dacă există deja o imagine, o înlocuiește
+      let img = cell.querySelector('img');
+      if (!img) {
+        img = document.createElement('img');
+        cell.appendChild(img);
+      }
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  };
+
+  fileInput.click();
+});
+
+
+  board.appendChild(cell);
+}
+
+// ======= TEXT =======
+textBtn.onclick = () => {
+  textPopup.style.display = textPopup.style.display === 'block' ? 'none' : 'block';
+};
+
+document.getElementById('addTextToBoard').onclick = () => {
+  const text = document.getElementById('customText').value.trim();
+  if (!text) return;
+  const font = document.getElementById('fontSelect').value;
+  const size = document.getElementById('fontSize').value + 'px';
+  const el = document.createElement('div');
+  el.className = 'draggable-text';
+  el.textContent = text;
+  el.style.fontFamily = font;
+  el.style.fontSize = size;
+  el.style.left = '40px';
+  el.style.top = '100px';
+  board.appendChild(el);
+  makeDraggable(el);
+  enableTextEditing(el);
+};
+
+// ======= DRAG TEXT =======
+function makeDraggable(el) {
+  let isDragging = false;
+  let startX = 0;
+  let startY = 0;
+  let startLeft = 0;
+  let startTop = 0;
+
+  const startDrag = (e) => {
+    if (e.target.isContentEditable) return;
+
+    e.preventDefault();
+    isDragging = true;
+
+    const boardRect = board.getBoundingClientRect();
+    const rect = el.getBoundingClientRect();
+
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+    startX = clientX;
+    startY = clientY;
+
+    // Poziția inițială relativ la board
+    startLeft = rect.left - boardRect.left;
+    startTop = rect.top - boardRect.top;
+
+    el.style.cursor = "grabbing";
+
+    document.addEventListener("mousemove", dragMove);
+    document.addEventListener("mouseup", endDrag);
+    document.addEventListener("touchmove", dragMove, { passive: false });
+    document.addEventListener("touchend", endDrag);
+  };
+
+  const dragMove = (e) => {
+    if (!isDragging) return;
+    e.preventDefault();
+
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+    const deltaX = clientX - startX;
+    const deltaY = clientY - startY;
+
+    el.style.left = `${startLeft + deltaX}px`;
+    el.style.top = `${startTop + deltaY}px`;
+  };
+
+  const endDrag = () => {
+    isDragging = false;
+    el.style.cursor = "grab";
+    document.removeEventListener("mousemove", dragMove);
+    document.removeEventListener("mouseup", endDrag);
+    document.removeEventListener("touchmove", dragMove);
+    document.removeEventListener("touchend", endDrag);
+  };
+
+  el.addEventListener("mousedown", startDrag);
+  el.addEventListener("touchstart", startDrag, { passive: false });
+}
+
+  // ======= ENABLE TEXT EDITING + DELETE =======
+function enableTextEditing(el) {
+  // Dublu click pentru editare
+  el.addEventListener("dblclick", () => {
+    el.contentEditable = true;
+    el.focus();
+    el.classList.add("editing");
+  });
+
+  // Pierde focus = finalizează editarea
+  el.addEventListener("blur", () => {
+    el.contentEditable = false;
+    el.classList.remove("editing");
+  });
+
+  // Click dreapta (sau tap lung) pentru ștergere
+  el.addEventListener("contextmenu", (e) => {
+    e.preventDefault();
+    if (confirm("Delete this text?")) el.remove();
+  });
+
+  // Tap lung pe telefon/tabletă pentru ștergere
+  let touchTimer;
+  el.addEventListener("touchstart", () => {
+    touchTimer = setTimeout(() => {
+      if (confirm("Delete this text?")) el.remove();
+    }, 1000); // 1 secundă menținere pentru ștergere
+  });
+  el.addEventListener("touchend", () => clearTimeout(touchTimer));
+}
+
+
+// ======= SAVE PNG =======
+document.getElementById('saveBtn').onclick = () => {
+  html2canvas(board).then(canvas => {
+    const link = document.createElement('a');
+    link.download = 'vision-board.png';
+    link.href = canvas.toDataURL();
+    link.click();
+  });
+};
+
+// ======= LOCAL SAVE =======
+document.getElementById('localSaveBtn').onclick = () => {
+  localStorage.setItem('visionBoard', board.innerHTML);
+  alert('Saved locally!');
+};
+
+// ======= LOAD =======
+window.onload = () => {
+  const saved = localStorage.getItem('visionBoard');
+  if (saved) {
+    board.innerHTML = saved;
+    board.querySelectorAll('.draggable-text').forEach(el => {
+      makeDraggable(el);
+      enableTextEditing(el);
+    });
+  }
+};
+
+// ======= CLEAR =======
+document.getElementById('clearBtn').onclick = () => {
+  const choice = confirm("Do you want to clear EVERYTHING?\nPress Cancel to clear only checkboxes.");
+  if (choice) {
+    localStorage.removeItem('visionBoard');
+    board.innerHTML = '';
+    for (let i = 0; i < totalCells; i++) createCell();
+  } else {
+    board.querySelectorAll('input[type=\"checkbox\"]').forEach(cb => cb.checked = false);
+  }
+};
+</script>
+</body>
+</html>
