@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Vision Board 2025</title>
+<title>Vision Board</title>
+
 <style>
 body {
   margin: 0;
@@ -14,50 +15,46 @@ body {
   align-items: center;
 }
 
-/* ===== HEADER ===== */
+/* HEADER */
 header {
   width: 100%;
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 12px 20px;
-  background: #648A55;
+  background: #7FA1BE;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  flex-wrap: wrap;
 }
 
 .right-buttons {
   display: flex;
   gap: 10px;
-  flex-wrap: wrap;
 }
 
-button, select {
+button {
   padding: 8px 12px;
   border: 1px solid #ccc;
   border-radius: 4px;
-  background: #fff;
+  background: white;
   cursor: pointer;
   font-size: 14px;
   font-weight: bold;
 }
 
-button:hover, select:hover {
+button:hover {
   background: #7FAFDA;
 }
 
 h1 {
-  margin: 10px;
-  font-size: 22px;
   color: white;
+  font-size: 22px;
 }
 
-/* ===== BOARD ===== */
+/* GRID */
 #vision-board {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   grid-auto-rows: 100px;
-  gap: 0;
   width: 95%;
   max-width: 600px;
   margin-top: 20px;
@@ -66,9 +63,9 @@ h1 {
 .cell {
   position: relative;
   border: 0.8px solid #ddd;
-  background-color: #fafafa;
-  overflow: hidden;
+  background: #fafafa;
   cursor: pointer;
+  overflow: hidden;
 }
 
 .cell img {
@@ -77,390 +74,250 @@ h1 {
   object-fit: cover;
 }
 
-/* ===== CHECKBOX ===== */
-.cell input[type="checkbox"] {
-  appearance: none;
-  position: absolute;
-  top: 6px;
-  left: 6px;
-  width: 20px;
-  height: 20px;
-  cursor: pointer;
-  z-index: 20;
-  background: none;
-  border: none;
-}
-
-.cell input[type="checkbox"]::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  font-size: 18px;
-  color: rgba(40, 167, 69, 0.6);
-  opacity: 0;
-  transition: opacity 0.2s ease;
-}
-
-.cell input[type="checkbox"]:checked::after {
-  content: "✔";
-  opacity: 1;
-}
-
-/* ===== ADD IMAGE TEXT ===== */
 .add-image-text {
   position: absolute;
   bottom: 5px;
   right: 5px;
   font-size: 10px;
   color: #C0C0C0;
-  font-weight: bold;
   pointer-events: none;
 }
 
-.cell:hover .add-image-text {
-  color: #8A8A8A;
-}
-
-/* ===== DRAGGABLE TEXT ===== */
+/* TEXT */
 .draggable-text {
   position: absolute;
-  cursor: grab;
-  user-select: none;
   font-weight: bold;
+  user-select: none;
+  cursor: grab;
   background: white;
   padding: 6px 10px;
   border-radius: 6px;
   white-space: pre-wrap;
-  max-width: 90%;
-  touch-action: none;
   box-shadow: 0 1px 4px rgba(0,0,0,0.15);
 }
 
 .draggable-text.editing {
   outline: 2px dashed #666;
-  background: rgba(255,255,255,1);
-  box-shadow: 0 0 6px rgba(0,0,0,0.3);
+  background: white;
 }
 </style>
 </head>
+
 <body>
 
 <header>
-  <h1>
-    Vision Board 
-    <select id="yearSelect">
-      <option>2025</option>
-      <option>2026</option>
-      <option>2027</option>
-    </select>
-  </h1>
+  <h1>Vision Board</h1>
 
   <div class="right-buttons">
     <button id="saveBtn">Save PNG</button>
-    <button id="localSaveBtn">Local Save</button>
     <button id="clearBtn">Clear</button>
     <button id="textBtn">Add Text</button>
   </div>
 </header>
 
-<!-- Popup Text Editor -->
-<div id="textPopup" style="display:none; position:fixed; top:80px; right:20px; background:white; border:1px solid #ccc; box-shadow:0 2px 6px rgba(0,0,0,0.2); padding:15px; z-index:100;">
-  <textarea id="customText" placeholder="Enter text..." style="width:200px;height:60px;margin-bottom:10px;"></textarea>
+<!-- POPUP TEXT -->
+<div id="textPopup" style="display:none; position:fixed; top:80px; right:20px; background:white; border:1px solid #ccc; padding:15px; box-shadow:0 2px 6px rgba(0,0,0,0.3);">
+  <textarea id="customText" style="width:200px;height:60px;margin-bottom:10px;" placeholder="Enter text"></textarea>
   <select id="fontSelect" style="width:100%;margin-bottom:10px;">
-    <option value="Arial">Arial</option>
-    <option value="Georgia">Georgia</option>
-    <option value="Courier New">Courier New</option>
-    <option value="Comic Sans MS">Comic Sans MS</option>
-    <option value="Times New Roman">Times New Roman</option>
+    <option>Arial</option>
+    <option>Georgia</option>
+    <option>Courier New</option>
+    <option>Comic Sans MS</option>
   </select>
   <select id="fontSize" style="width:100%;margin-bottom:10px;">
     <option value="14">Small</option>
     <option value="18" selected>Medium</option>
     <option value="24">Large</option>
-    <option value="32">Extra Large</option>
+    <option value="32">XL</option>
   </select>
-  <button id="addTextToBoard" style="width:100%;">Add to Board</button>
+  <button id="addTextToBoard" style="width:100%;">Add</button>
 </div>
 
-<!-- Vision Board -->
 <div id="vision-board"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
 <script>
-const board = document.getElementById('vision-board');
-const textPopup = document.getElementById('textPopup');
-const textBtn = document.getElementById('textBtn');
+const board = document.getElementById("vision-board");
 const totalCells = 12;
 
-function storageKey() {
-  return "visionBoard_" + document.getElementById("yearSelect").value;
-}
+/* Save key (single year) */
+const STORAGE_KEY = "visionBoard";
 
-/* --------------------------
-   CREATE CELLS
----------------------------*/
-for (let i = 0; i < totalCells; i++) createCell();
+/* Create grid cells */
+function createCells() {
+  for (let i = 0; i < totalCells; i++) {
+    const cell = document.createElement("div");
+    cell.className = "cell";
 
-function createCell() {
-  const cell = document.createElement('div');
-  cell.className = 'cell';
+    const label = document.createElement("div");
+    label.className = "add-image-text";
+    label.textContent = "Add Image";
+    cell.appendChild(label);
 
-  const checkbox = document.createElement('input');
-  checkbox.type = 'checkbox';
-  cell.appendChild(checkbox);
-
-  const label = document.createElement('div');
-  label.className = 'add-image-text';
-  label.textContent = 'Add Image';
-  cell.appendChild(label);
-
-  cell.addEventListener('click', (e) => {
-    if (e.target === checkbox) return;
-
-    const fileInput = document.createElement('input');
-    fileInput.type = 'file';
-    fileInput.accept = 'image/*';
-
-    fileInput.onchange = () => {
-      const file = fileInput.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = () => {
-        const addText = cell.querySelector('.add-image-text');
-        if (addText) addText.remove();
-
-        let img = cell.querySelector('img');
-        if (!img) {
-          img = document.createElement('img');
-          cell.appendChild(img);
-        }
-        img.src = reader.result;
-      };
-      reader.readAsDataURL(file);
-    };
-
-    fileInput.click();
-  });
-
-  board.appendChild(cell);
-}
-
-/* --------------------------
-   ADD TEXT
----------------------------*/
-textBtn.onclick = () => {
-  textPopup.style.display =
-    textPopup.style.display === 'block' ? 'none' : 'block';
-};
-
-document.getElementById('addTextToBoard').onclick = () => {
-  const text = document.getElementById('customText').value.trim();
-  if (!text) return;
-
-  const font = document.getElementById('fontSelect').value;
-  const size = document.getElementById('fontSize').value + 'px';
-
-  const el = document.createElement('div');
-  el.className = 'draggable-text';
-  el.textContent = text;
-  el.style.fontFamily = font;
-  el.style.fontSize = size;
-  el.style.left = '40px';
-  el.style.top = '100px';
-
-  board.appendChild(el);
-  makeDraggable(el);
-  enableTextEditing(el);
-};
-
-/* --------------------------
-   DRAG TEXT
----------------------------*/
-function makeDraggable(el) {
-  let isDragging = false;
-  let startX = 0;
-  let startY = 0;
-  let startLeft = 0;
-  let startTop = 0;
-
-  const startDrag = (e) => {
-    if (e.target.isContentEditable) return;
-    e.preventDefault();
-    isDragging = true;
-
-    const boardRect = board.getBoundingClientRect();
-    const rect = el.getBoundingClientRect();
-
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-
-    startX = clientX;
-    startY = clientY;
-    startLeft = rect.left - boardRect.left;
-    startTop = rect.top - boardRect.top;
-
-    el.style.cursor = "grabbing";
-
-    document.addEventListener("mousemove", dragMove);
-    document.addEventListener("mouseup", endDrag);
-    document.addEventListener("touchmove", dragMove, { passive: false });
-    document.addEventListener("touchend", endDrag);
-  };
-
-  const dragMove = (e) => {
-    if (!isDragging) return;
-    e.preventDefault();
-
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-
-    const deltaX = clientX - startX;
-    const deltaY = clientY - startY;
-
-    el.style.left = `${startLeft + deltaX}px`;
-    el.style.top = `${startTop + deltaY}px`;
-  };
-
-  const endDrag = () => {
-    isDragging = false;
-    el.style.cursor = "grab";
-    document.removeEventListener("mousemove", dragMove);
-    document.removeEventListener("mouseup", endDrag);
-    document.removeEventListener("touchmove", dragMove);
-    document.removeEventListener("touchend", endDrag);
-  };
-
-  el.addEventListener("mousedown", startDrag);
-  el.addEventListener("touchstart", startDrag, { passive: false });
-}
-
-/* --------------------------
-   TEXT EDIT / DELETE
----------------------------*/
-function enableTextEditing(el) {
-  el.addEventListener("dblclick", () => {
-    el.contentEditable = true;
-    el.focus();
-    el.classList.add("editing");
-  });
-
-  el.addEventListener("blur", () => {
-    el.contentEditable = false;
-    el.classList.remove("editing");
-  });
-
-  el.addEventListener("contextmenu", (e) => {
-    e.preventDefault();
-    if (confirm("Delete this text?")) el.remove();
-  });
-}
-
-/* --------------------------
-   SAVE PNG
----------------------------*/
-document.getElementById('saveBtn').onclick = () => {
-  html2canvas(board).then(canvas => {
-    const link = document.createElement('a');
-    link.download = 'vision-board.png';
-    link.href = canvas.toDataURL();
-    link.click();
-  });
-};
-
-/* --------------------------
-   LOCAL SAVE — PER YEAR
----------------------------*/
-document.getElementById('localSaveBtn').onclick = async () => {
-  const images = board.querySelectorAll("img");
-
-  for (const img of images) {
-    if (img.src.startsWith("data:")) continue;
-
-    await new Promise(resolve => {
-      const temp = new Image();
-      temp.crossOrigin = "anonymous";
-      temp.onload = () => {
-        const c = document.createElement("canvas");
-        c.width = temp.naturalWidth;
-        c.height = temp.naturalHeight;
-        const ctx = c.getContext("2d");
-        ctx.drawImage(temp, 0, 0);
-        img.src = c.toDataURL("image/png");
-        resolve();
-      };
-      temp.src = img.src;
-    });
-  }
-
-  localStorage.setItem(storageKey(), board.innerHTML);
-  alert("Saved for " + document.getElementById("yearSelect").value);
-};
-
-/* --------------------------
-   LOAD PER YEAR
----------------------------*/
-window.onload = loadYear;
-document.getElementById("yearSelect").onchange = loadYear;
-
-function loadYear() {
-  const saved = localStorage.getItem(storageKey());
-
-  board.innerHTML = saved || "";
-
-  if (!saved) {
-    for (let i = 0; i < totalCells; i++) createCell();
-    return;
-  }
-
-  board.querySelectorAll('.draggable-text').forEach(el => {
-    makeDraggable(el);
-    enableTextEditing(el);
-  });
-
-  board.querySelectorAll('.cell').forEach(cell => {
-    cell.addEventListener('click', (e) => {
-      if (e.target.tagName === "INPUT") return;
-
-      const fileInput = document.createElement('input');
-      fileInput.type = 'file';
-      fileInput.accept = 'image/*';
+    cell.onclick = (e) => {
+      const fileInput = document.createElement("input");
+      fileInput.type = "file";
+      fileInput.accept = "image/*";
       fileInput.onchange = () => {
         const file = fileInput.files[0];
         if (!file) return;
 
         const reader = new FileReader();
         reader.onload = () => {
-          let img = cell.querySelector('img');
+          label.remove();
+          let img = cell.querySelector("img");
           if (!img) {
-            img = document.createElement('img');
+            img = document.createElement("img");
             cell.appendChild(img);
           }
           img.src = reader.result;
-
-          const addText = cell.querySelector('.add-image-text');
-          if (addText) addText.remove();
         };
         reader.readAsDataURL(file);
       };
       fileInput.click();
-    });
+    };
+
+    board.appendChild(cell);
+  }
+}
+
+/* Text popup */
+document.getElementById("textBtn").onclick = () => {
+  const p = document.getElementById("textPopup");
+  p.style.display = p.style.display === "block" ? "none" : "block";
+};
+
+/* Add text */
+document.getElementById("addTextToBoard").onclick = () => {
+  const text = document.getElementById("customText").value.trim();
+  if (!text) return;
+
+  const el = document.createElement("div");
+  el.className = "draggable-text";
+  el.textContent = text;
+  el.style.fontFamily = document.getElementById("fontSelect").value;
+  el.style.fontSize = document.getElementById("fontSize").value + "px";
+
+  el.style.left = "40px";
+  el.style.top = "100px";
+
+  board.appendChild(el);
+  makeDraggable(el);
+  enableEditing(el);
+};
+
+/* Drag text */
+function makeDraggable(el) {
+  let drag = false, sx, sy, sl, st;
+
+  el.addEventListener("mousedown", (e) => {
+    drag = true;
+    el.style.cursor = "grabbing";
+    const r = el.getBoundingClientRect();
+    sx = e.clientX; sy = e.clientY;
+    sl = r.left - board.getBoundingClientRect().left;
+    st = r.top - board.getBoundingClientRect().top;
+  });
+
+  document.addEventListener("mousemove", (e) => {
+    if (!drag) return;
+    el.style.left = sl + (e.clientX - sx) + "px";
+    el.style.top = st + (e.clientY - sy) + "px";
+  });
+
+  document.addEventListener("mouseup", () => {
+    drag = false;
+    el.style.cursor = "grab";
   });
 }
 
-/* --------------------------
-   CLEAR
----------------------------*/
-document.getElementById('clearBtn').onclick = () => {
-  const choice = confirm("Clear this year's board?");
+/* Edit text */
+function enableEditing(el) {
+  el.addEventListener("dblclick", () => {
+    el.contentEditable = true;
+    el.classList.add("editing");
+  });
+  el.addEventListener("blur", () => {
+    el.contentEditable = false;
+    el.classList.remove("editing");
+  });
+  el.addEventListener("contextmenu", (e) => {
+    e.preventDefault();
+    if (confirm("Delete text?")) el.remove();
+  });
+}
 
-  if (choice) {
-    localStorage.removeItem(storageKey());
-    board.innerHTML = "";
-    for (let i = 0; i < totalCells; i++) createCell();
-  }
+/* Save PNG */
+document.getElementById("saveBtn").onclick = () => {
+  html2canvas(board).then(c => {
+    const a = document.createElement("a");
+    a.download = "vision-board.png";
+    a.href = c.toDataURL();
+    a.click();
+  });
 };
+
+/* Load saved board */
+function loadBoard() {
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if (!saved) {
+    createCells();
+    return;
+  }
+  board.innerHTML = saved;
+
+  board.querySelectorAll(".draggable-text").forEach(el => {
+    makeDraggable(el);
+    enableEditing(el);
+  });
+
+  board.querySelectorAll(".cell").forEach(cell => {
+    if (!cell.querySelector(".add-image-text") && !cell.querySelector("img")) {
+      const label = document.createElement("div");
+      label.className = "add-image-text";
+      label.textContent = "Add Image";
+      cell.appendChild(label);
+    }
+
+    cell.onclick = () => {
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = "image/*";
+      input.onchange = () => {
+        const f = input.files[0];
+        if (!f) return;
+        const r = new FileReader();
+        r.onload = () => {
+          const label = cell.querySelector(".add-image-text");
+          if (label) label.remove();
+          let img = cell.querySelector("img");
+          if (!img) img = cell.appendChild(document.createElement("img"));
+          img.src = r.result;
+          saveBoard();
+        };
+        r.readAsDataURL(f);
+      };
+      input.click();
+    };
+  });
+}
+
+/* Auto-save on every change */
+function saveBoard() {
+  localStorage.setItem(STORAGE_KEY, board.innerHTML);
+}
+
+/* Clear */
+document.getElementById("clearBtn").onclick = () => {
+  if (!confirm("Clear board?")) return;
+  localStorage.removeItem(STORAGE_KEY);
+  board.innerHTML = "";
+  createCells();
+};
+
+window.onload = loadBoard;
 </script>
+
 </body>
 </html>
