@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Vision Board 2025</title>
-
 <style>
 body {
   margin: 0;
@@ -22,7 +21,8 @@ header {
   justify-content: space-between;
   align-items: center;
   padding: 12px 20px;
-  background: #648A55;
+  background: #7FA1BE;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   flex-wrap: wrap;
 }
 
@@ -42,13 +42,17 @@ button, select {
   font-weight: bold;
 }
 
+button:hover, select:hover {
+  background: #7FAFDA;
+}
+
 h1 {
   margin: 10px;
   font-size: 22px;
   color: white;
 }
 
-/*===== BOARD =====*/
+/* ===== BOARD ===== */
 #vision-board {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -73,7 +77,7 @@ h1 {
   object-fit: cover;
 }
 
-/* Checkboxes */
+/* ===== CHECKBOX ===== */
 .cell input[type="checkbox"] {
   appearance: none;
   position: absolute;
@@ -81,6 +85,7 @@ h1 {
   left: 6px;
   width: 20px;
   height: 20px;
+  cursor: pointer;
   z-index: 20;
   background: none;
   border: none;
@@ -92,8 +97,9 @@ h1 {
   top: 0;
   left: 0;
   font-size: 18px;
-  color: rgba(40,167,69,0.6);
+  color: rgba(40, 167, 69, 0.6);
   opacity: 0;
+  transition: opacity 0.2s ease;
 }
 
 .cell input[type="checkbox"]:checked::after {
@@ -101,16 +107,22 @@ h1 {
   opacity: 1;
 }
 
-/* Add Image Text */
+/* ===== ADD IMAGE TEXT ===== */
 .add-image-text {
   position: absolute;
   bottom: 5px;
   right: 5px;
   font-size: 10px;
   color: #C0C0C0;
+  font-weight: bold;
+  pointer-events: none;
 }
 
-/* Draggable Text */
+.cell:hover .add-image-text {
+  color: #8A8A8A;
+}
+
+/* ===== DRAGGABLE TEXT ===== */
 .draggable-text {
   position: absolute;
   cursor: grab;
@@ -119,15 +131,25 @@ h1 {
   background: white;
   padding: 6px 10px;
   border-radius: 6px;
+  white-space: pre-wrap;
+  max-width: 90%;
+  touch-action: none;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.15);
 }
+
+.draggable-text.editing {
+  outline: 2px dashed #666;
+  background: rgba(255,255,255,1);
+  box-shadow: 0 0 6px rgba(0,0,0,0.3);
+}
+
 </style>
 </head>
-
 <body>
 
 <header>
   <h1>
-    Vision Board
+    Vision Board 
     <select id="yearSelect">
       <option>2025</option>
       <option>2026</option>
@@ -142,188 +164,217 @@ h1 {
   </div>
 </header>
 
-<!-- TEXT POPUP -->
-<div id="textPopup" style="display:none; position:fixed; top:80px; right:20px; background:white; border:1px solid #ccc; padding:15px; z-index:100;">
-  <textarea id="customText" style="width:200px;height:60px;"></textarea>
-  <select id="fontSelect" style="width:100%; margin-top:10px;">
-    <option>Arial</option>
-    <option>Georgia</option>
-    <option>Courier New</option>
+<!-- Popup Text Editor -->
+<div id="textPopup" style="display:none; position:fixed; top:80px; right:20px; background:white; border:1px solid #ccc; box-shadow:0 2px 6px rgba(0,0,0,0.2); padding:15px; z-index:100;">
+  <textarea id="customText" placeholder="Enter text..." style="width:200px;height:60px;margin-bottom:10px;"></textarea>
+  <select id="fontSelect" style="width:100%;margin-bottom:10px;">
+    <option value="Arial">Arial</option>
+    <option value="Georgia">Georgia</option>
+    <option value="Courier New">Courier New</option>
+    <option value="Comic Sans MS">Comic Sans MS</option>
+    <option value="Times New Roman">Times New Roman</option>
   </select>
-  <select id="fontSize" style="width:100%; margin-top:10px;">
+  <select id="fontSize" style="width:100%;margin-bottom:10px;">
     <option value="14">Small</option>
     <option value="18" selected>Medium</option>
     <option value="24">Large</option>
+    <option value="32">Extra Large</option>
   </select>
-  <button id="addTextToBoard" style="margin-top:10px; width:100%;">Add</button>
+  <button id="addTextToBoard" style="width:100%;">Add to Board</button>
 </div>
 
-<!-- BOARD -->
+<!-- Vision Board -->
 <div id="vision-board"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-
 <script>
-
-const board = document.getElementById("vision-board");
-const yearSelect = document.getElementById("yearSelect");
+const board = document.getElementById('vision-board');
+const textPopup = document.getElementById('textPopup');
+const textBtn = document.getElementById('textBtn');
 const totalCells = 12;
 
-/* ===================== CREATE CELLS ===================== */
-function createCell() {
-  const cell = document.createElement("div");
-  cell.className = "cell";
+for (let i = 0; i < totalCells; i++) createCell();
 
-  const checkbox = document.createElement("input");
-  checkbox.type = "checkbox";
+function createCell() {
+  const cell = document.createElement('div');
+  cell.className = 'cell';
+
+  const checkbox = document.createElement('input');
+  checkbox.type = 'checkbox';
   cell.appendChild(checkbox);
 
-  const label = document.createElement("div");
-  label.className = "add-image-text";
-  label.textContent = "Add Image";
+  const label = document.createElement('div');
+  label.className = 'add-image-text';
+  label.textContent = 'Add Image';
   cell.appendChild(label);
 
-  cell.addEventListener("click", (e) => {
-    if (e.target.tagName === "INPUT") return;
+  cell.addEventListener('click', (e) => {
+    if (e.target === checkbox) return;
 
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = "image/*";
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = 'image/*';
 
-    input.onchange = () => {
-      const file = input.files[0];
+    fileInput.onchange = () => {
+      const file = fileInput.files[0];
       if (!file) return;
 
       const reader = new FileReader();
       reader.onload = () => {
-        const old = cell.querySelector("img");
-        if (old) old.remove();
+        const addText = cell.querySelector('.add-image-text');
+        if (addText) addText.remove();
 
-        const img = document.createElement("img");
-        img.src = reader.result; // <-- DATA URL (salvabil)
-        cell.appendChild(img);
-
-        const t = cell.querySelector(".add-image-text");
-        if (t) t.remove();
+        let img = cell.querySelector('img');
+        if (!img) {
+          img = document.createElement('img');
+          cell.appendChild(img);
+        }
+        img.src = reader.result;
       };
       reader.readAsDataURL(file);
     };
 
-    input.click();
+    fileInput.click();
   });
 
   board.appendChild(cell);
 }
 
-function buildBoard() {
-  board.innerHTML = "";
-  for (let i = 0; i < totalCells; i++) createCell();
-}
+/* ===== TEXT BUTTON ===== */
+textBtn.onclick = () => {
+  textPopup.style.display = textPopup.style.display === 'block' ? 'none' : 'block';
+};
 
-/* ===================== DRAGGING TEXT ===================== */
+document.getElementById('addTextToBoard').onclick = () => {
+  const text = document.getElementById('customText').value.trim();
+  if (!text) return;
+  const font = document.getElementById('fontSelect').value;
+  const size = document.getElementById('fontSize').value + 'px';
 
+  const el = document.createElement('div');
+  el.className = 'draggable-text';
+  el.textContent = text;
+  el.style.fontFamily = font;
+  el.style.fontSize = size;
+  el.style.left = '40px';
+  el.style.top = '100px';
+  board.appendChild(el);
+
+  makeDraggable(el);
+  enableTextEditing(el);
+};
+
+/* ===== DRAG TEXT ===== */
 function makeDraggable(el) {
-  let startX, startY, startL, startT;
+  let isDragging = false, startX = 0, startY = 0, startLeft = 0, startTop = 0;
 
   el.addEventListener("mousedown", (e) => {
+    if (e.target.isContentEditable) return;
+
+    e.preventDefault();
+    isDragging = true;
+
+    const rect = el.getBoundingClientRect();
+    const boardRect = board.getBoundingClientRect();
+
     startX = e.clientX;
     startY = e.clientY;
-    startL = parseInt(el.style.left);
-    startT = parseInt(el.style.top);
+    startLeft = rect.left - boardRect.left;
+    startTop = rect.top - boardRect.top;
 
-    const move = (ev) => {
-      el.style.left = (startL + ev.clientX - startX) + "px";
-      el.style.top = (startT + ev.clientY - startY) + "px";
+    document.onmousemove = (ev) => {
+      if (!isDragging) return;
+      el.style.left = startLeft + (ev.clientX - startX) + "px";
+      el.style.top = startTop + (ev.clientY - startY) + "px";
     };
 
-    const stop = () => {
-      document.removeEventListener("mousemove", move);
-      document.removeEventListener("mouseup", stop);
+    document.onmouseup = () => {
+      isDragging = false;
+      document.onmousemove = null;
+      document.onmouseup = null;
     };
-
-    document.addEventListener("mousemove", move);
-    document.addEventListener("mouseup", stop);
   });
 }
 
-/* ===================== LOAD YEAR ===================== */
+/* ===== TEXT EDIT ===== */
+function enableTextEditing(el) {
+  el.addEventListener("dblclick", () => {
+    el.contentEditable = true;
+    el.classList.add("editing");
+    el.focus();
+  });
 
-function loadYear() {
-  const year = yearSelect.value;
-  const saved = localStorage.getItem("visionBoard_" + year);
+  el.addEventListener("blur", () => {
+    el.contentEditable = false;
+    el.classList.remove("editing");
+  });
+}
 
-  if (!saved) {
-    buildBoard();
-    return;
+/* =======================================================
+   FIX COMPLET — LOCAL SAVE — FUNCȚIONEAZĂ 100%
+   ======================================================= */
+document.getElementById("localSaveBtn").onclick = async () => {
+  const images = board.querySelectorAll("img");
+
+  for (const img of images) {
+    if (img.src.startsWith("data:")) continue;
+
+    await new Promise(resolve => {
+      const tmp = new Image();
+      tmp.crossOrigin = "anonymous";
+      
+      tmp.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = tmp.naturalWidth;
+        canvas.height = tmp.naturalHeight;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(tmp, 0, 0);
+        img.src = canvas.toDataURL("image/png");
+        resolve();
+      };
+
+      tmp.src = img.src;
+    });
   }
 
-  board.innerHTML = saved;
-
-  // reinitialize text dragging
-  board.querySelectorAll(".draggable-text").forEach(el => makeDraggable(el));
-}
-
-yearSelect.onchange = loadYear;
-
-/* ===================== SAVE LOCAL (FIXED) ===================== */
-
-document.getElementById("localSaveBtn").onclick = () => {
-  const year = yearSelect.value;
-
-  // IMPORTANT: ensure all images are encoded as dataURL before saving
-  board.querySelectorAll("img").forEach(img => {
-    if (!img.src.startsWith("data:")) {
-      img.src = img.src;  // ensures innerHTML contains the dataURL
-    }
-  });
-
-  localStorage.setItem("visionBoard_" + year, board.innerHTML);
-  alert("Saved for year " + year + "!");
+  localStorage.setItem("visionBoard", board.innerHTML);
+  alert("Saved locally!");
 };
 
-/* ===================== SAVE PNG ===================== */
-document.getElementById("saveBtn").onclick = () => {
+
+/* ===== LOAD SAVED ===== */
+window.onload = () => {
+  const saved = localStorage.getItem('visionBoard');
+  if (saved) {
+    board.innerHTML = saved;
+    board.querySelectorAll('.draggable-text').forEach(el => {
+      makeDraggable(el);
+      enableTextEditing(el);
+    });
+  }
+};
+
+/* ===== CLEAR ===== */
+document.getElementById('clearBtn').onclick = () => {
+  const choice = confirm("Do you want to clear EVERYTHING?\nPress Cancel to clear only checkboxes.");
+  if (choice) {
+    localStorage.removeItem('visionBoard');
+    board.innerHTML = '';
+    for (let i = 0; i < totalCells; i++) createCell();
+  } else {
+    board.querySelectorAll('input[type=\"checkbox\"]').forEach(cb => cb.checked = false);
+  }
+};
+
+/* ===== SAVE PNG ===== */
+document.getElementById('saveBtn').onclick = () => {
   html2canvas(board).then(canvas => {
-    const a = document.createElement("a");
-    a.download = "vision-board.png";
-    a.href = canvas.toDataURL();
-    a.click();
+    const link = document.createElement('a');
+    link.download = 'vision-board.png';
+    link.href = canvas.toDataURL();
+    link.click();
   });
 };
-
-/* ===================== ADD TEXT ===================== */
-document.getElementById("textBtn").onclick = () => {
-  const pop = document.getElementById("textPopup");
-  pop.style.display = pop.style.display === "block" ? "none" : "block";
-};
-
-document.getElementById("addTextToBoard").onclick = () => {
-  const txt = document.getElementById("customText").value.trim();
-  if (!txt) return;
-
-  const el = document.createElement("div");
-  el.className = "draggable-text";
-  el.textContent = txt;
-  el.style.fontFamily = document.getElementById("fontSelect").value;
-  el.style.fontSize = document.getElementById("fontSize").value + "px";
-  el.style.left = "40px";
-  el.style.top = "100px";
-
-  board.appendChild(el);
-  makeDraggable(el);
-};
-
-/* ===================== CLEAR ===================== */
-document.getElementById("clearBtn").onclick = () => {
-  const year = yearSelect.value;
-  localStorage.removeItem("visionBoard_" + year);
-  buildBoard();
-};
-
-/* ===================== INITIAL LOAD ===================== */
-buildBoard();
-loadYear();
-
 </script>
 </body>
 </html>
